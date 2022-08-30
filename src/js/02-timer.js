@@ -1,12 +1,16 @@
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
+import Notiflix from 'notiflix';
 
-const datetimePickerRef = document.querySelector('#datetime-picker');
+const inputRef = document.querySelector('input#datetime-picker');
 const startTimerRef = document.querySelector('button[data-start]');
 const daysSpanRef = document.querySelector('span[data-days]');
 const hoursSpanRef = document.querySelector('span[data-hours]');
 const minutesSpanRef = document.querySelector('span[data-minutes]');
 const secondsSpanRef = document.querySelector('span[data-seconds]');
+
+let selectedTime = new Date().getTime();
+startTimerRef.setAttribute('disabled', true);
 
 const options = {
   enableTime: true,
@@ -14,30 +18,42 @@ const options = {
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
-    console.log(selectedDates[0]);
+    selectedTime = selectedDates[0];
+    if (selectedTime < new Date()) {
+      Notiflix.Notify.warning('Please choose a date in the future');
+    } else {
+      startTimerRef.removeAttribute('disabled');
+      Notiflix.Notify.success('Let`s start timer');
+    }
   },
 };
 
 flatpickr('input#datetime-picker', options);
 
-let selectedTime = new Date().getTime();
-console.log(selectedTime);
+startTimerRef.addEventListener('click', onStartTimer);
 
 function onStartTimer() {
-  setInterval(() => {
-    const currentTime = Date.now();
-    const deltaTime = selectedTime - currentTime;
-    console.log(deltaTime);
-    const { days, hours, minutes, seconds } = convertMs(deltaTime);
-    daysSpanRef.textContent = days;
-    hoursSpanRef.textContent = hours;
-    minutesSpanRef.textContent = minutes;
-    secondsSpanRef.textContent = seconds;
-    console.log(days, hours, minutes, seconds);
+  startTimerRef.setAttribute('disabled', true);
+  inputRef.setAttribute('disabled', true);
+
+  const intervalID = setInterval(() => {
+    const currentTime = new Date();
+    let deltaTime = selectedTime - currentTime;
+
+    if (deltaTime >= 0) {
+      const { days, hours, minutes, seconds } = convertMs(deltaTime);
+      daysSpanRef.textContent = addLeadingZero(days);
+      hoursSpanRef.textContent = addLeadingZero(hours);
+      minutesSpanRef.textContent = addLeadingZero(minutes);
+      secondsSpanRef.textContent = addLeadingZero(seconds);
+      console.log(days, hours, minutes, seconds);
+    } else {
+      clearInterval(intervalID);
+      startTimerRef.removeAttribute('disabled', true);
+      inputRef.removeAttribute('disabled', true);
+    }
   }, 1000);
 }
-
-startTimerRef.addEventListener('click', onStartTimer);
 
 function convertMs(ms) {
   // Number of milliseconds per unit of time
@@ -58,6 +74,6 @@ function convertMs(ms) {
   return { days, hours, minutes, seconds };
 }
 
-console.log(convertMs(2000)); // {days: 0, hours: 0, minutes: 0, seconds: 2}
-console.log(convertMs(140000)); // {days: 0, hours: 0, minutes: 2, seconds: 20}
-console.log(convertMs(24140000)); // {days: 0, hours: 6 minutes: 42, seconds: 20}
+function addLeadingZero(value) {
+  return value.toString().padStart(2, '0');
+}
