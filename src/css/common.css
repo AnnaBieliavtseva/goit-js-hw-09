@@ -31,3 +31,10 @@ img {
   font-size: 36px;
   display: block;
 }
+
+
+.btn {
+ font-size: 40px;
+ padding: 10px;
+ color: #212121
+}
